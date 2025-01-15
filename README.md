@@ -181,3 +181,13 @@ HTMLファイル1つで必ず出力されるようにしてください。
 APIサーバーのベースURLは、`/todos`に設定してください。
 {各種条件　色合い、デザイン、機能など}
 ```
+
+
+# エラーを何とかする
+
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8000): [errno 98] address already in use
+
+lsof -i
+8000が使っているPIDを探す
+
+kill -9 探した数字
