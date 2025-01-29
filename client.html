@@ -17,17 +17,45 @@
             text-decoration: line-through;
             color: gray;
         }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); }
-        .calendar div { padding: 10px; border: 1px solid #ccc; text-align: center; cursor: pointer; }
-        .calendar .today { background-color: #f0f0f0; }
+        .calendar {
+             display: grid; grid-template-columns: repeat(7, 1fr); 
+            }
+
+        .calendar div {
+             padding: 10px; border: 1px solid #ccc; text-align: center; cursor: pointer; 
+            }
+
+        .calendar .today {
+             background-color: #f0f0f0; 
+            }
+
+        .calendar-header{
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .calendar-header button{
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
         .todo-list { margin-top: 20px; }
+
     </style>
 </head>
 
 <body>
     <h1>TODOリスト</h1>
-    <div id="calendar" class="calendar"></div>
-    <div id="todoModal" style="display:none;"
+    <div id="calendarHeader" class="calendar-header">
+        <button id="prevMonthBtn">前月</button>
+        <span id="currentMonth"></span>
+        <button id="nextMonthBtn">次月</button>
+    </div>
+
+    <div id="calendar" class="calendar"></div> 
+
+    <div id="todoModal" style="display:none;"></div>
+
 
     <!-- TODOを追加するためのフォーム -->
     <form id="todoForm" class="todo-form">
@@ -128,38 +156,54 @@
         }
 
         // カレンダーを生成
-        function renderCalendar() {
-            const calendarElement = document.getElementById('calendar');
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
-            const firstDayOfWeek = firstDay.getDay(); // 1日が何曜日か
+        let currentDate = new Date();  // 現在の日付を保持
 
-            let calendarHtml = '';
-            // 前月の空白日を追加
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                calendarHtml += `<div></div>`;
-            }
+// 月のカレンダーを描画
+    function renderCalendar() {
+        const calendarElement = document.getElementById('calendar');
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+    
+    // 月を表示 (例: 2025年 1月)
+        document.getElementById('currentMonth').textContent = `${year}年 ${month + 1}月`;
 
-            // 月の日付を追加
-            for (let day = 1; day <= daysInMonth; day++) {
-                const date = `${year}-${month + 1}-${day}`;
-                calendarHtml += `
-                    <div onclick="openTodoModal('${date}')">${day}</div>
-                `;
-            }
+    // 月の最初の日と最後の日を計算
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const firstDayOfWeek = firstDay.getDay();  // 1日が何曜日か
 
-            calendarElement.innerHTML = calendarHtml;
+        let calendarHtml = '';
+
+    // 前月の空白日を追加
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            calendarHtml += `<div></div>`;
         }
 
-        function openTodoModal(date){
-            document.getElementById('todoModal').style.display = 'block';
-            document.getElementById('selectedDate').value = date;
-            document.getElementById('dueDateInput').value = date;
+    // 月の日付を追加
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = `${year}-${month + 1}-${day}`;
+            calendarHtml += `
+             <div onclick="openTodoModal('${date}')">${day}</div>
+            `;
         }
+
+        calendarElement.innerHTML = calendarHtml;
+    }
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);  // 1ヶ月前に設定
+        renderCalendar();  // カレンダーを再描画
+    });
+
+// 次月ボタンのクリックイベント
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);  // 1ヶ月後に設定
+        renderCalendar();  // カレンダーを再描画
+    });
+
+    // 初期表示でカレンダーを描画
+    document.addEventListener('DOMContentLoaded', renderCalendar);
 
 
         /**
