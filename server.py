@@ -106,7 +106,7 @@ def update_todo(todo_id: int, todo: Todo):
     with sqlite3.connect("todos.db") as conn:
         # タイトルと完了状態を更新
         cursor = conn.execute(
-            "UPDATE todos SET title = ?, completed = ?, dueDate = ?, WHERE id = ?",
+            "UPDATE todos SET title = ?, completed = ?, dueDate = ? WHERE id = ?",
             (todo.title, todo.completed, todo.dueDate, todo_id),
         )
         if cursor.rowcount == 0:  # 更新対象のTODOが存在しない場合は404エラーを返す

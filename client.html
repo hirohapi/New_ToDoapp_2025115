@@ -7,52 +7,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>シンプルTODO</title>
     <style>
-        /* フォームの上下に余白を追加 */
-        .todo-form {
-            margin: 1rem 0;
+        body{
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
 
-        /* 完了したTODOのスタイル：取り消し線と薄い色 */
+        h1{
+            text-align: center;
+            margin-top: 20px;
+            font-size: 2rem;
+            color: #4A90E2;
+        }
+
+        .calendar{
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .calendar div {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+            cursor: pointer;
+            background-color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .calendar div:hover {
+            background-color: #ffeb3b;
+        }
+
+        .calendar .today {
+            background-color: #ffeb3b;
+        }
+
+        .calendar .has-todo {
+            background-color: #ffc107;
+            border-radius: 50%;
+            padding: 5px;
+            color: red;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .calendar .has-todo:hover {
+            background-color: #ff9800;
+        }
+
+        /* カレンダーのヘッダー */
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-header button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            border: none;
+            background-color: #4A90E2;
+            color: white;
+            font-size: 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .calendar-header button:hover {
+            background-color: #357ABD;
+        }
+
+        .calendar-header span {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .todo-form {
+            display: flex;
+            justify-content: center;
+            margin: 20px;
+        }
+
+        .todo-form input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            width: 300px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .todo-form input[type="date"] {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .todo-form button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .todo-form button:hover {
+            background-color: #45a049;
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .todo-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        .todo-list li .due-date {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .todo-list li button {
+            padding: 5px 10px;
+            background-color: #E53935;
+            color: white;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .todo-list li button:hover {
+            background-color: #d32f2f;
+        }
+
+
         .completed {
             text-decoration: line-through;
             color: gray;
         }
-        .calendar {
-             display: grid; grid-template-columns: repeat(7, 1fr); 
-            }
 
-        .calendar div {
-             padding: 10px; border: 1px solid #ccc; text-align: center; cursor: pointer; 
-            }
 
-        .calendar .today {
-             background-color: #f0f0f0; 
-            }
-
-        .calendar-header{
-            text-align: center;
-            margin-bottom: 1rem;
+        #todoModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            display: none;
         }
-        
-        .calendar-header button{
-            padding: 5px 10px;
-            margin: 0 5px;
+
+        #todoModal input[type="text"],
+        #todoModal input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        #todoModal button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-        }
-        .todo-list { margin-top: 20px; }
-
-        .has-todo{
-            background-color: yellow;
-            border-radius: 50%;
-            padding: 5px;
-            color: red;  /* 目立たせるため文字色を変更 */
-            text-align: center;
-            font-weight: bold;
+            transition: background-color 0.3s;
         }
 
-        .has-todo:hover{
-            background-color: orange;
+        #todoModal button:hover {
+            background-color: #45a049;
         }
+
 
     </style>
 </head>
@@ -73,7 +225,7 @@
     <!-- TODOを追加するためのフォーム -->
     <form id="todoForm" class="todo-form">
         <input type="text" id="todoInput" placeholder="新しいTODOを入力..." required>
-        <input type="date" id="dueDateInput" placeholder="期日(任意)"  >
+        <input type="date" id="dueDateInput" placeholder="期日"  >
         <input type="hidden" id="selectedDate">
         <button type="submit">追加</button>
     </form>
@@ -129,7 +281,10 @@
             const todos = await api(API_URL);
             if (todos) {
                 // 取得したTODOをHTMLに変換して表示
-                todoDates = todos.map(todo => todo.dueDate).filter(dueDate => dueDate !== null);
+                todoDates = todos
+                .filter(todo => todo.dueDate && todo.dueDate.trim() !== '')
+                .map(todo => formatDate(todo.dueDate));
+                        
                 
                 document.getElementById('todoList').innerHTML =todos.map(renderTodo).join('');
             }
@@ -148,12 +303,11 @@
             });
 
             if (dueDate){
-                const formattedDate = formatDate(dueDate);
-                if (!todoDates.includes(formattedDate)) {
-                    todoDates.push(formattedDate);
-                }
-
+                todoDates.push(dueDate);
+                    
             }
+
+            
             // リストを再読み込みして表示を更新
             loadTodos();
             renderCalendar();
