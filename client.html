@@ -41,6 +41,19 @@
         }
         .todo-list { margin-top: 20px; }
 
+        .has-todo{
+            background-color: yellow;
+            border-radius: 50%;
+            padding: 5px;
+            color: red;  /* 目立たせるため文字色を変更 */
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .has-todo:hover{
+            background-color: orange;
+        }
+
     </style>
 </head>
 
@@ -60,7 +73,7 @@
     <!-- TODOを追加するためのフォーム -->
     <form id="todoForm" class="todo-form">
         <input type="text" id="todoInput" placeholder="新しいTODOを入力..." required>
-        <input type="text" id="dueDateInput" readonly>
+        <input type="date" id="dueDateInput" placeholder="期日(任意)"  >
         <input type="hidden" id="selectedDate">
         <button type="submit">追加</button>
     </form>
@@ -110,13 +123,15 @@
         /**
          * すべてのTODOを読み込んでページに表示
          */
+        let todoDates = [];
         async function loadTodos() {
             // APIからTODOリストを取得
             const todos = await api(API_URL);
             if (todos) {
                 // 取得したTODOをHTMLに変換して表示
-                document.getElementById('todoList').innerHTML =
-                    todos.map(renderTodo).join('');
+                todoDates = todos.map(todo => todo.dueDate).filter(dueDate => dueDate !== null);
+                
+                document.getElementById('todoList').innerHTML =todos.map(renderTodo).join('');
             }
         }
 
@@ -129,10 +144,19 @@
             await api(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, completed: false, dueDate })
+                body: JSON.stringify({ title, completed: false, dueDate: dueDate || null})
             });
+
+            if (dueDate){
+                const formattedDate = formatDate(dueDate);
+                if (!todoDates.includes(formattedDate)) {
+                    todoDates.push(formattedDate);
+                }
+
+            }
             // リストを再読み込みして表示を更新
             loadTodos();
+            renderCalendar();
         }
 
         /**
@@ -187,9 +211,14 @@
 
         // 月の日付を追加
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = `${year}-${month + 1}-${day}`;
+            const today = new Date();
+            const date = formatDate(new Date(year, month, day));
+            const hasTodo = todoDates.includes(date);
+            
             calendarHtml += `
-             <div onclick="openTodoModal('${date}')">${day}</div>
+                 <div class="${hasTodo ? 'has-todo' : ''}" onclick="openTodoModal('${date}')">
+                     ${day}
+                </div>
             `;
         }
 
@@ -209,19 +238,38 @@
 
     function openTodoModal(date) {
         document.getElementById('selectedDate').value = date; 
-        document.getElementById('dueDateInput').value = date;
+        
+        const dueDateInput = document.getElementById('dueDateInput');
+        if (!dueDateInput.value) {
+            dueDateInput.value = date;
+        }
+        
 
         loadTodosForDate(date);
-    }
+
+        }
+
 
     async function loadTodosForDate(date) {
         const todos = await api(API_URL);
         if (todos) {
-            const filteredTodos = todos.filter(todo => todo.dueDate === date);
+            const formattedDate = formatDate(date); 
+            const filteredTodos = todos.filter(todo => {
+                return formatDate(todo.dueDate) === formattedDate;
+            });
             const todoList = filteredTodos.map(renderTodo).join('');
             document.getElementById('todoList').innerHTML = todoList;
+            
         }
     }
+
+    function formatDate(date) {
+                if (!(date instanceof Date)) {
+                    date = new Date(date);
+                }
+                if (isNaN(date.getTime())) return ''; 
+                return date.toISOString().split('T')[0];
+            }
 
     // 初期表示でカレンダーを描画
     document.addEventListener('DOMContentLoaded', renderCalendar);
@@ -232,10 +280,23 @@
          * @param {number} id - 削除するTODOのID
          */
         async function deleteTodo(id) {
+            const todo = await api(`${API_URL}/${id}`);
+            if (!todo) return;
             // DELETEリクエストでTODOを削除
             await api(`${API_URL}/${id}`, { method: 'DELETE' });
             // リストを再読み込みして表示を更新
+            if (todo.dueDate) {
+                const formattedDate = formatDate(todo.dueDate);
+                const todos = await api(API_URL);
+                const hasOtherTodos = todos.some(t => t.dueDate === formattedDate);
+
+                if (!hasOtherTodos) {
+                    todoDates = todoDates.filter(date => date !== formattedDate);
+                }
+            }
+
             loadTodos();
+            renderCalendar();
         }
 
         // ページ読み込み完了時の処理
@@ -253,17 +314,22 @@
                 // 入力されたテキストを取得
                 const input = document.getElementById('todoInput');
                 const title = input.value.trim();
-                const dueDate = document.getElementById('dueDateInput').value;
+                const dueDateInput = document.getElementById('dueDateInput');
+                const dueDate = dueDateInput.value ? formatDate(dueDateInput.value) : null;
+
+                
                 // テキストが入力されている場合のみTODOを追加
-                if (title && dueDate) {
+                if (title) {
                     addTodo(title, dueDate);
                     // 入力フィールドをクリア
                     input.value = '';
+                    dueDateInput.value = '';
                     document.getElementById('todoModal').style.display = 'none';
-                    document.getElementById('dueDateInput').value = '';
 
                 }
             });
+
+    
         });
     </script>
 </body>
