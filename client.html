@@ -17,16 +17,23 @@
             text-decoration: line-through;
             color: gray;
         }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); }
+        .calendar div { padding: 10px; border: 1px solid #ccc; text-align: center; cursor: pointer; }
+        .calendar .today { background-color: #f0f0f0; }
+        .todo-list { margin-top: 20px; }
     </style>
 </head>
 
 <body>
     <h1>TODOリスト</h1>
+    <div id="calendar" class="calendar"></div>
+    <div id="todoModal" style="display:none;"
 
     <!-- TODOを追加するためのフォーム -->
     <form id="todoForm" class="todo-form">
         <input type="text" id="todoInput" placeholder="新しいTODOを入力..." required>
         <input type="date" id="dueDateInput">
+        <input type="hidden" id="selectedDate">
         <button type="submit">追加</button>
     </form>
 
@@ -120,6 +127,40 @@
             }
         }
 
+        // カレンダーを生成
+        function renderCalendar() {
+            const calendarElement = document.getElementById('calendar');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const firstDayOfWeek = firstDay.getDay(); // 1日が何曜日か
+
+            let calendarHtml = '';
+            // 前月の空白日を追加
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                calendarHtml += `<div></div>`;
+            }
+
+            // 月の日付を追加
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = `${year}-${month + 1}-${day}`;
+                calendarHtml += `
+                    <div onclick="openTodoModal('${date}')">${day}</div>
+                `;
+            }
+
+            calendarElement.innerHTML = calendarHtml;
+        }
+
+        function openTodoModal(date){
+            document.getElementById('todoModal').style.display = 'block';
+            document.getElementById('selectedDate').value = date;
+        }
+
+
         /**
          * TODOを削除
          * @param {number} id - 削除するTODOのID
@@ -135,6 +176,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 初期表示としてTODOリストを読み込む
             loadTodos();
+            renderCalendar();
 
             // フォームの送信イベントを処理
             document.getElementById('todoForm').addEventListener('submit', e => {
@@ -150,6 +192,13 @@
                     // 入力フィールドをクリア
                     input.value = '';
                     document.getElementById('dueDateInput').value = '';
+
+                    if (title) {
+                        addTodo(title, dueDate);
+                        document.getElementById('todoInput').value = '';
+                        document.getElementById('todoModal').style.display = 'none';
+                        
+                    }
                 }
             });
         });
