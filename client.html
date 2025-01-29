@@ -158,16 +158,16 @@
         // カレンダーを生成
         let currentDate = new Date();  // 現在の日付を保持
 
-// 月のカレンダーを描画
+    // 月のカレンダーを描画
     function renderCalendar() {
         const calendarElement = document.getElementById('calendar');
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
     
-    // 月を表示 (例: 2025年 1月)
+        // 月を表示 (例: 2025年 1月)
         document.getElementById('currentMonth').textContent = `${year}年 ${month + 1}月`;
 
-    // 月の最初の日と最後の日を計算
+        // 月の最初の日と最後の日を計算
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
@@ -175,12 +175,17 @@
 
         let calendarHtml = '';
 
-    // 前月の空白日を追加
+        const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+        weekDays.forEach(day => {
+            calendarHtml += `<div class="week-day">${day}</div>`;
+        });
+
+        // 前月の空白日を追加
         for (let i = 0; i < firstDayOfWeek; i++) {
             calendarHtml += `<div></div>`;
         }
 
-    // 月の日付を追加
+        // 月の日付を追加
         for (let day = 1; day <= daysInMonth; day++) {
             const date = `${year}-${month + 1}-${day}`;
             calendarHtml += `
@@ -196,11 +201,27 @@
         renderCalendar();  // カレンダーを再描画
     });
 
-// 次月ボタンのクリックイベント
+    // 次月ボタンのクリックイベント
     document.getElementById('nextMonthBtn').addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);  // 1ヶ月後に設定
         renderCalendar();  // カレンダーを再描画
     });
+
+    function openTodoModal(date) {
+        document.getElementById('selectedDate').value = date; 
+        document.getElementById('dueDateInput').value = date;
+
+        loadTodosForDate(date);
+    }
+
+    async function loadTodosForDate(date) {
+        const todos = await api(API_URL);
+        if (todos) {
+            const filteredTodos = todos.filter(todo => todo.dueDate === date);
+            const todoList = filteredTodos.map(renderTodo).join('');
+            document.getElementById('todoList').innerHTML = todoList;
+        }
+    }
 
     // 初期表示でカレンダーを描画
     document.addEventListener('DOMContentLoaded', renderCalendar);
@@ -227,16 +248,19 @@
             document.getElementById('todoForm').addEventListener('submit', e => {
                 // フォームのデフォルトの送信動作を防止
                 e.preventDefault();
+                renderCalendar();
+                loadTodos();
                 // 入力されたテキストを取得
                 const input = document.getElementById('todoInput');
                 const title = input.value.trim();
                 const dueDate = document.getElementById('dueDateInput').value;
                 // テキストが入力されている場合のみTODOを追加
-                if (title) {
-                    addTodo(title);
+                if (title && dueDate) {
+                    addTodo(title, dueDate);
                     // 入力フィールドをクリア
                     input.value = '';
                     document.getElementById('todoModal').style.display = 'none';
+                    document.getElementById('dueDateInput').value = '';
 
                 }
             });
