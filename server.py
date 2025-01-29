@@ -36,7 +36,8 @@ def init_db():
             CREATE TABLE IF NOT EXISTS todos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
-                completed BOOLEAN DEFAULT FALSE
+                completed BOOLEAN DEFAULT FALSE,
+                dueDate TEXT
             )
         """
         )
@@ -50,6 +51,7 @@ init_db()
 class Todo(BaseModel):
     title: str  # TODOのタイトル（必須）
     completed: Optional[bool] = False  # 完了状態（省略可能、デフォルトは未完了）
+    dueDate: Optional[str] = None
 
 
 # レスポンスのデータ構造を定義するクラス（TodoクラスにIDを追加）
@@ -70,11 +72,11 @@ def create_todo(todo: Todo):
     with sqlite3.connect("todos.db") as conn:
         cursor = conn.execute(
             # SQLインジェクション対策のためパラメータ化したSQL文を使用
-            "INSERT INTO todos (title, completed) VALUES (?, ?)",
-            (todo.title, todo.completed),
+            "INSERT INTO todos (title, completed, dueDate) VALUES (?, ?, ?)",
+            (todo.title, todo.completed, todo.dueDate),
         )
         todo_id = cursor.lastrowid  # 新しく作成されたTODOのIDを取得
-        return {"id": todo_id, "title": todo.title, "completed": todo.completed}
+        return {"id": todo_id, "title": todo.title, "completed": todo.completed, "dueDate": todo.dueDate}
 
 
 # 全てのTODOを取得するエンドポイント
@@ -83,7 +85,7 @@ def get_todos():
     with sqlite3.connect("todos.db") as conn:
         todos = conn.execute("SELECT * FROM todos").fetchall()  # 全てのTODOを取得
         # データベースから取得したタプルをJSON形式に変換して返す
-        return [{"id": t[0], "title": t[1], "completed": bool(t[2])} for t in todos]
+        return [{"id": t[0], "title": t[1], "completed": bool(t[2]), "dueDate": t[3] if len(t) > 3 else None} for t in todos]
 
 
 # 指定されたIDのTODOを取得するエンドポイント
@@ -95,7 +97,7 @@ def get_todo(todo_id: int):
             "SELECT * FROM todos WHERE id = ?", (todo_id,)).fetchone()
         if not todo:  # TODOが見つからない場合は404エラーを返す
             raise HTTPException(status_code=404, detail="Todo not found")
-        return {"id": todo[0], "title": todo[1], "completed": bool(todo[2])}
+        return {"id": todo[0], "title": todo[1], "completed": bool(todo[2]), "dueDate": todo[3]}
 
 
 # 指定されたIDのTODOを更新するエンドポイント
@@ -104,12 +106,12 @@ def update_todo(todo_id: int, todo: Todo):
     with sqlite3.connect("todos.db") as conn:
         # タイトルと完了状態を更新
         cursor = conn.execute(
-            "UPDATE todos SET title = ?, completed = ? WHERE id = ?",
-            (todo.title, todo.completed, todo_id),
+            "UPDATE todos SET title = ?, completed = ?, dueDate = ?, WHERE id = ?",
+            (todo.title, todo.completed, todo.dueDate, todo_id),
         )
         if cursor.rowcount == 0:  # 更新対象のTODOが存在しない場合は404エラーを返す
             raise HTTPException(status_code=404, detail="Todo not found")
-        return {"id": todo_id, "title": todo.title, "completed": todo.completed}
+        return {"id": todo_id, "title": todo.title, "completed": todo.completed, "dueDate": todo.dueDate}
 
 
 # 指定されたIDのTODOを削除するエンドポイント
